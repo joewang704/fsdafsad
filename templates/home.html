@@ -1,0 +1,289 @@
+<html>
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/d3.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,300" rel="stylesheet">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css">
+  <link rel="stylesheet" href="/static/fontawesome-stars-o.css">
+  <style>
+    html, body {
+      padding: 0;
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #efefef;
+      color: #333;
+      font-weight: 300;
+    }
+
+    #container {
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+      margin: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    svg {
+      border: 1px solid #ddd;
+    }
+
+    #height-container {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      height: 780px;
+    }
+
+    body {
+      font-family: 'Open Sans';
+    }
+
+    .links line {
+      stroke: #777;
+      stroke-opacity: 0.6;
+    }
+    
+    .nodes circle {
+      stroke: #aaa;
+      stroke-width: 2px;
+    }
+
+    #left-panel {
+      width: 350px;
+      height: 100%;
+      /*border: 1px solid #ddd; */
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+      background-color: #fff;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    #right-panel {
+      width: 350px;
+      height: 100%;
+      /*border: 1px solid #ddd; */
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+      background-color: #fff;
+      border-radius: 5px;
+    }
+
+    #search-bar {
+      width: 100%;
+      height: 10%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+      display: flex;
+      align-content: center;
+      justify-content: center;
+      background-color: #ff4533;
+    }
+
+    #search-bar input {
+      width: 85%;
+      height: 50%;
+      margin-top: auto;
+      margin-bottom: auto;
+    }
+
+    #results-container {
+      height: 90%;
+      overflow-y: scroll;
+    }
+
+    svg {
+      background-color: #fff;
+      margin-left: 10px;
+      margin-right: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    }
+
+    .placeholder {
+      color: #aaa;
+    }
+
+    #search-placeholder {
+      width: 100%;
+      text-align: center;
+      padding-top: 20px;
+    }
+
+    .search-result {
+      width: 100%;
+      padding: 10px;
+      border-bottom: solid 1px #efefef;
+      position: relative;
+    }
+
+    .search-item-location {
+      color: #999;
+      font-size: 15px;
+    }
+
+    .search-item-name {
+      color: #444;
+      margin-bottom: 10px;
+      font-size: 17px;
+    }
+
+    .add {
+      position: absolute;
+      bottom: 45;
+      right: 15;
+      color: #00AD51;
+    }
+    .add:hover {
+      cursor: pointer;
+    }
+    .remove {
+      position: absolute;
+      bottom: 45;
+      right: 15;
+      color: rgb(255, 95, 95);
+    }
+    .remove:hover {
+      cursor: pointer;
+    }
+
+    #saved-list {
+      position: absolute;
+      top: 45;
+      left: 470;
+      width: 700;
+    }
+
+    .saved-item {
+      color: #fff;
+      display: inline-block;
+      background-color: rgb(255, 95, 95);
+      padding: 5px;
+      border-radius: 5px;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+
+    .saved-res {
+      margin-right: 3px;
+    }
+    .cc:hover {
+      cursor: pointer; 
+    }
+ 
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div id="height-container">
+      <div id="left-panel">
+        <div id="search-bar">
+          <input type="text" class="form-control" placeholder="Search..">
+        </div>
+        <div id="results-container">
+        </div>
+      </div>
+      <div id="saved-list">
+      </div>
+      <svg id="graph_svg" width=800 height=780></svg>
+      <div id="right-panel">
+      </div>
+    </div>
+  </div>
+  <script
+    src="https://code.jquery.com/jquery-3.3.1.min.js"
+    integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+    crossorigin="anonymous"></script>
+  <script src="/static/graph.js"></script>
+  <script src="/static/barrating.js"></script>
+  <script>
+    const savedRestaurants = {}
+    $(document).ready(function() {
+      $('#search-bar input').keydown(function(event) {
+        if (event.keyCode == 13) {
+          $.ajax({
+            url: '/search',
+            type: 'get',
+            data: {
+              name: encodeURIComponent($(this).val()),
+            },
+            success: function(response) {
+              if (response && response.length) {
+                $('#results-container').html(
+                  response.map(({ id, name, stars, city, state }) => {
+                    const isSaved = !!savedRestaurants[id]
+                    return '<div class="search-result">'
+                      + '<div class="search-item-name">'+name+'</div>'
+                      + '<select class="rating" data-current-rating='+stars+' autocomplete="off">'
+                      + '<option value></option>'
+                      + '<option value="1">1</option>'
+                      + '<option value="2">2</option>'
+                      + '<option value="3">3</option>'
+                      + '<option value="4">4</option>'
+                      + '<option value="5">5</option>'
+                      + '</select>'
+                      + '<span class="search-item-location">'+city+', '+state+'</span>'
+                      + '<span class="search-item-location">'+city+', '+state+'</span>'
+                      + `<div id="${id}" class="${isSaved ? 'remove' : 'add'}" onClick="${isSaved ? 'remove' : 'add'}('${id}', '${name.replace(/'/g, "")}', '${city}', '${state}')">
+                          <i class="fa fa-${isSaved ? 'minus' : 'plus'}" aria-hidden="true"></i>
+                        </div>`
+                      + '</div>'
+                  }).join('')
+                ).promise().done(function(){
+                  $('.rating').each(function() {
+                    var rating = $(this).data('current-rating')
+                    $(this).barrating({
+                      theme: 'fontawesome-stars-o',
+                      initialRating: rating,
+                      readonly: true,
+                    })
+                  })
+                })
+
+              } else {
+                $('#results-container').html(
+                  '<div id="search-placeholder" class="placeholder">No search results found</div>'
+                )
+              }
+            }
+          })
+        }
+      })
+    })
+
+    function add(id, name, city, state) {
+      savedRestaurants[id] = {
+        id,
+        name,
+        city,
+        state,
+      } 
+      const idSelector = `#${id}`
+      $(idSelector).removeClass('add')
+      $(idSelector).addClass('remove')
+      $(idSelector).html('<i class="fa fa-minus" aria-hidden="true"></i>')
+      $(idSelector).attr('onclick', '').click(() => remove(id, name, city, state))
+      $("#saved-list").append(`<div id="${id}-item" class="saved-item">
+        <span class="saved-res">${name}</span>
+        <i class="fa fa-times cc" aria-hidden="true" onclick="remove('${id}')"></i>
+        </div>`)
+      deleteGraph()
+      createGraph(savedRestaurants)
+    }
+
+    function remove(id, name, city, state) {
+      delete savedRestaurants[id]
+      const idSelector = `#${id}`
+      $(idSelector).removeClass('remove')
+      $(idSelector).addClass('add')
+      $(idSelector).html('<i class="fa fa-plus" aria-hidden="true"></i>')
+      $(idSelector).attr('onclick', '').click(() => add(id, name, city, state))
+      $(idSelector + "-item").remove()
+      deleteGraph()
+      if (Object.keys(savedRestaurants).length > 0) {
+        createGraph(savedRestaurants)
+      }
+    }
+
+  </script>
+</body>
+</html>
