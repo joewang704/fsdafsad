@@ -177,7 +177,7 @@ function createGraph(data) {
         <option value="5">5</option>
       </select>
       <div id="map">
-        <img id="mapimg" src="https://maps.googleapis.com/maps/api/staticmap?center=${latitude},${longitude}&zoom=14&size=250x250&key=AIzaSyBkBxZG3I2hhzRd3lOH3B7i8rvfOjXqUUQ"/>
+        <img id="mapimg" src="https://maps.googleapis.com/maps/api/staticmap?center=${latitude},${longitude}&zoom=14&size=250x250&markers=color:red|${latitude},${longitude}&key=AIzaSyBkBxZG3I2hhzRd3lOH3B7i8rvfOjXqUUQ"/>
       </div>
       <div id="address">
         ${address}</br>
