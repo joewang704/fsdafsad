@@ -72,11 +72,6 @@ function createGraph(data) {
           .interpolate(d3.interpolateHcl)
           .range([d3.rgb("#FF5F5F"), d3.rgb('#FFF400')]);
         data.forEach(restaurant => {
-          nodes.forEach(node => {
-            if (ids.includes(node.id)) {
-              node.showLabel = true
-            }
-          })
           links.push({ source: ids[ids.length - 1], target: restaurant.id })
           if (ids.length > 1) {
             for (let i = 0; i < ids.length; i++) {
@@ -86,6 +81,12 @@ function createGraph(data) {
           }
           nodes.push(Object.assign(restaurant, { group }))
           console.log(nodes)
+        })
+
+        nodes.forEach(node => {
+          if (ids.includes(node.id)) {
+            node.showLabel = true
+          }
         })
 
         linkElements = linkGroup.selectAll("line").data(links, link => {
@@ -113,9 +114,9 @@ function createGraph(data) {
             .attr("fill", d => color(d.group))
             .on("click", d => d.showLabel || getNeighbors([d.id]))
             .on("mouseover", function(d) {
-              console.log(d)
               d3.select(this).style('stroke', '#788FFF')
               d3.select(this).style('stroke-width', 5)
+              showInfo(d)
             })
             .on("mouseout", function(d) {
               d3.select(this).style('stroke', undefined)
@@ -159,6 +160,40 @@ function createGraph(data) {
             .attr('y', function (node) { return node.y })
         }
       }
+    })
+  }
+
+  function showInfo(data) {
+    const { name, stars, address, neighborhood, city, state, postal_code, latitude, longitude } = data
+    console.log(data)
+    $("#right-panel").html(`
+      <div id="info-title">${name}</div>
+      <select class="rating" data-current-rating="${stars}" autocomplete="off">
+        <option value></option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+      </select>
+      <div id="map">
+        <img id="mapimg" src="https://maps.googleapis.com/maps/api/staticmap?center=${latitude},${longitude}&zoom=14&size=250x250&key=AIzaSyBkBxZG3I2hhzRd3lOH3B7i8rvfOjXqUUQ"/>
+      </div>
+      <div id="address">
+        ${address}</br>
+        ${neighborhood}${neighborhood && '</br>'}
+        ${city}, ${state} ${postal_code}</br>
+      </div>
+    `).promise().done(function(){
+      $('.rating').each(function() {
+        var rating = $(this).data('current-rating')
+        $(this).barrating({
+          theme: 'fontawesome-stars-o',
+          initialRating: rating,
+          readonly: true,
+        })
+      })
+      $("#mapimg").attr('src', )
     })
   }
   /*function redrawGraph() {

@@ -37,10 +37,10 @@ def search():
     partial_name = unquote(request.args.get('name'))
     print(partial_name)
     cur = mysql.connection.cursor()
-    query = "select business.id, business.name, business.stars, business.city, business.state from business join category on business.id = category.business_id where business.name like '%" + mysql.connection.escape_string(partial_name) + "%' and category.category='Restaurants' and business.state='AZ' limit 20"; print query
+    query = "select business.id, business.name, stars, city, state, neighborhood, address, postal_code, review_count, latitude, longitude from business join category on business.id = category.business_id where business.name like '%" + mysql.connection.escape_string(partial_name) + "%' and category.category='Restaurants' and business.state='AZ' limit 20"; print query
     cur.execute(query)
     data = cur.fetchall()
-    result = map(lambda x: { "id": x[0], "name": x[1], "stars": x[2], "city": x[3], "state": x[4] }, data)
+    result = map(lambda x: { "id": x[0], "name": x[1], "stars": x[2], "city": x[3], "state": x[4], "neighborhood": x[5], "address": x[6], "postal_code": x[7], "review_count": x[8], "latitude": x[9], "longitude": x[10] }, data)
     # result = get_recommendation(business_ids, exclude_business_ids)
     return jsonify(result)
 
@@ -85,10 +85,10 @@ def get_recommendation(source_ids, exclude_ids):
     top_indices = res[::-1][0:10]
 
     # return data
-    query = "select business.name, business.id from business join business_index on business.id = business_index.business_id where m_index in " + str(tuple(top_indices)) #idk if this works
+    query = "select business.name, business.id, neighborhood, address, city, state, postal_code, stars, review_count, latitude, longitude from business join business_index on business.id = business_index.business_id where m_index in " + str(tuple(top_indices)) #idk if this works
     cur.execute(query)
     data = cur.fetchall()
-    data = map(lambda x: { "id": x[1], "name": x[0] }, data)
+    data = map(lambda x: { "id": x[1], "name": x[0], "neighborhood": x[2], "address": x[3], "city": x[4], "state": x[5], "postal_code": x[6], "stars": x[7], "review_count": x[8], "latitude": x[9], "longitude": x[10] }, data)
     return data
 
 

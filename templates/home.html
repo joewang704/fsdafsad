@@ -2,7 +2,7 @@
 <head>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/d3.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
-  <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,300" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:700,400,300" rel="stylesheet">
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
   <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css">
   <link rel="stylesheet" href="/static/fontawesome-stars-o.css">
@@ -169,6 +169,11 @@
     .cc:hover {
       cursor: pointer; 
     }
+
+    #info-title {
+      font-size: 35px;
+      font-weight: 700;
+    }
  
   </style>
 </head>
@@ -197,6 +202,7 @@
   <script src="/static/barrating.js"></script>
   <script>
     const savedRestaurants = {}
+    const allRestaurants = {}
     $(document).ready(function() {
       $('#search-bar input').keydown(function(event) {
         if (event.keyCode == 13) {
@@ -209,8 +215,10 @@
             success: function(response) {
               if (response && response.length) {
                 $('#results-container').html(
-                  response.map(({ id, name, stars, city, state }) => {
+                  response.map((data) => {
+                    const { id, name, stars, city, state } = data
                     const isSaved = !!savedRestaurants[id]
+                    allRestaurants[id] = data
                     return '<div class="search-result">'
                       + '<div class="search-item-name">'+name+'</div>'
                       + '<select class="rating" data-current-rating='+stars+' autocomplete="off">'
@@ -223,7 +231,8 @@
                       + '</select>'
                       + '<span class="search-item-location">'+city+', '+state+'</span>'
                       + '<span class="search-item-location">'+city+', '+state+'</span>'
-                      + `<div id="${id}" class="${isSaved ? 'remove' : 'add'}" onClick="${isSaved ? 'remove' : 'add'}('${id}', '${name.replace(/'/g, "")}', '${city}', '${state}')">
+                      //+ `<div id="${id}" class="${isSaved ? 'remove' : 'add'}" onClick="${isSaved ? 'remove' : 'add'}('${id}', '${name.replace(/'/g, "")}', '${city}', '${state}')">
+                      + `<div id="${id}" class="${isSaved ? 'remove' : 'add'}" onClick="${isSaved ? 'remove' : 'add'}('${id}')">
                           <i class="fa fa-${isSaved ? 'minus' : 'plus'}" aria-hidden="true"></i>
                         </div>`
                       + '</div>'
@@ -250,33 +259,31 @@
       })
     })
 
-    function add(id, name, city, state) {
-      savedRestaurants[id] = {
-        id,
-        name,
-        city,
-        state,
-      } 
+    function add(id) {
+      const data = allRestaurants[id]
+      console.log(data)
+      savedRestaurants[id] = data
       const idSelector = `#${id}`
       $(idSelector).removeClass('add')
       $(idSelector).addClass('remove')
       $(idSelector).html('<i class="fa fa-minus" aria-hidden="true"></i>')
-      $(idSelector).attr('onclick', '').click(() => remove(id, name, city, state))
+      $(idSelector).attr('onclick', '').click(() => remove(id))
       $("#saved-list").append(`<div id="${id}-item" class="saved-item">
-        <span class="saved-res">${name}</span>
+        <span class="saved-res">${data.name}</span>
         <i class="fa fa-times cc" aria-hidden="true" onclick="remove('${id}')"></i>
         </div>`)
       deleteGraph()
       createGraph(savedRestaurants)
     }
 
-    function remove(id, name, city, state) {
+    function remove(id) {
+      const data = allRestaurants[id]
       delete savedRestaurants[id]
       const idSelector = `#${id}`
       $(idSelector).removeClass('remove')
       $(idSelector).addClass('add')
       $(idSelector).html('<i class="fa fa-plus" aria-hidden="true"></i>')
-      $(idSelector).attr('onclick', '').click(() => add(id, name, city, state))
+      $(idSelector).attr('onclick', '').click(() => add(id))
       $(idSelector + "-item").remove()
       deleteGraph()
       if (Object.keys(savedRestaurants).length > 0) {
