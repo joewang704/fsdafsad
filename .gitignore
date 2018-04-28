@@ -4,3 +4,5 @@ cosine.sql
 index.sql
 tfidf.sql
 *.pyc
+tfidf.py
+train/data/
